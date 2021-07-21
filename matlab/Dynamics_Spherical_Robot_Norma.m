@@ -68,11 +68,14 @@ td  = 0;
 phd = 0;
 dld = 0;
 
+e=0;
+state = [0 0 0 0];
+
 %Main Loop
 
 hold on
 iteration  = 0;
-final_time = 10
+final_time = 5;
 
 for t = 0:dt:final_time
 
@@ -152,8 +155,13 @@ for t = 0:dt:final_time
     % t2=t2-(ad-td)*C2;
     % t3=0-C3*phd;
     
+    
+    
+    
     %Forces and torques
     TT = [t1  ; t2 ; t3 ; t4];
+    TT = control(state,dt);
+    
     
     %Accerelatins
     Out = M\(TT-VV);
@@ -188,6 +196,26 @@ for t = 0:dt:final_time
     y   = dy * dt + y;
     psi = psd * dt + psi;
     z   = 0;
+    
+    state = [theta,al,phi,dl]'
+    
+%     
+%     phi_d = +0.05;
+%     k = 15;
+%     lll = 10;
+%     
+%     e2 = e;
+%     e = dl - phi_d
+%     
+%     de = (e-e2) / dt;
+%     
+%     s = de + lll*e
+%     
+%     t4=-k*sign(s)
+%     %t4 = 2
+%     dl=dl
+%     
+    
     
     %render
     if mod(iteration, render_interval)  == 0
