@@ -23,7 +23,7 @@ clear ppid3;
 %(This should be the output of your controller)
 
 t1 = 0;
-t2 = -0.2;           %Torque applied to the pendulum
+t2 = 0;           %Torque applied to the pendulum
 t3 = 0;
 t4 = 0;             %Force applied to the slider
 
@@ -76,7 +76,11 @@ dld = 0;
 e_delta = 0;
 e_delta2 = 0
 de_delta = 0;
-idelta = 0;
+
+e_theta = 0;
+e_theta2 = 0;
+de_theta = 0;
+
 
 %Main Loop
 
@@ -229,9 +233,11 @@ for t = 0:dt:final_time
     b = inv(M);
     f = inv(M) * ( -C*dq - G );
     
-    deltad = 0;
     
-    k_delta = 10;
+    %%slider3
+    deltad = -0.05;
+    
+    k_delta = 25;
     lambda_delta = 5;
     e_delta2 = e_delta;
     e_delta = deltad - dl;
@@ -243,17 +249,36 @@ for t = 0:dt:final_time
         t4 = (deltad - lambda_delta*de_delta + k_delta*sign(s_delta) - b(4,2)*U(2) + f(4)) / b(4,4);
     end
     
-    e_tethad = 1 - td;
+    
+    %pid1
+    e_tethad = 0.1 - td;
     
     e_almte = ppid1(e_tethad,dt) - (al - theta);
     
-    t2 = ppid2(e_almte,dt);
+    %t2 = ppid2(e_almte,dt);
     
-    e_delta = 0 - dl;
+    %e_delta = 0 - dl;
     
     %t4 = ppid3(e_delta,dt) + g*m_Slider*sin(phi);
 
-
+    %slider 2
+    
+    thetad = e_almte
+    k_theta = 10;
+    lambda_theta = 5;
+    e_theta2 = e_theta;
+    de_theta = (e_theta - e_theta2) / dt;
+    
+    s_theta = de_theta - lambda_theta * e_theta;
+    
+    if t>dt
+        t2 = ( f(2) - f(1) - (b(1,4) - b(2,4)) * U(4) - thetad - lambda_theta * de_theta - k_theta * sign(s_theta))/(b(1,2) - b(2,2));
+    end
+    
+    
+% e_theta = 0;
+% e_theta2 = 0;
+% de_theta = 0;
     
     %render
     if mod(iteration, render_interval)  == 0
