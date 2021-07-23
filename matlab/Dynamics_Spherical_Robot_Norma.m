@@ -14,11 +14,16 @@
 clear
 clc
 
+clear ppid1;
+clear ppid2;
+clear ppid3;
+
+
 %Forces and torques
 %(This should be the output of your controller)
 
 t1 = 0;
-t2 = 0.2;           %Torque applied to the pendulum
+t2 = -0.2;           %Torque applied to the pendulum
 t3 = 0;
 t4 = 0;             %Force applied to the slider
 
@@ -31,8 +36,8 @@ g = 9.80665;
 R = 0.2;            %Radius of the Sphere
 L = 0.15;           %Lenght of the Pendulum
 m_Sphere   = 3;     %Sphere's Mass
-m_Slider   = 1;     %Slider's Mass
-m_Pendulum = 1;     %Pendulum's Mass
+m_Slider   = 0.5;     %Slider's Mass
+m_Pendulum = 0.5;     %Pendulum's Mass
 m_Shaft    = 0.5;   %Shaft's Mass
 D0 = 0.1;           %Slider's initial position
 L0 = 0.1;           %Pendulum's Position
@@ -68,14 +73,16 @@ td  = 0;
 phd = 0;
 dld = 0;
 
-e=0;
-state = [0 0 0 0];
+e_delta = 0;
+e_delta2 = 0
+de_delta = 0;
+idelta = 0;
 
 %Main Loop
 
 hold on
 iteration  = 0;
-final_time = 5;
+final_time = 10;
 
 for t = 0:dt:final_time
 
@@ -151,16 +158,15 @@ for t = 0:dt:final_time
     VV = CQD+G;
     
 	% Uncomment for friction:
-    % t1 = 0;
-    % t2=t2-(ad-td)*C2;
-    % t3=0-C3*phd;
+     t1 = 0;
+     t2=t2-(ad-td)*C2;
+     t3=0-C3*phd;
     
     
     
     
     %Forces and torques
     TT = [t1  ; t2 ; t3 ; t4];
-    TT = control(state,dt);
     
     
     %Accerelatins
@@ -197,8 +203,7 @@ for t = 0:dt:final_time
     psi = psd * dt + psi;
     z   = 0;
     
-    state = [theta,al,phi,dl]'
-    
+     
 %     
 %     phi_d = +0.05;
 %     k = 15;
@@ -216,6 +221,39 @@ for t = 0:dt:final_time
 %     dl=dl
 %     
     
+    
+
+    q = [theta ; al ; phi ; dl];
+    dq = [td ; ad ; phd ; dld];
+    U = TT;
+    b = inv(M);
+    f = inv(M) * ( -C*dq - G );
+    
+    deltad = 0;
+    
+    k_delta = 10;
+    lambda_delta = 5;
+    e_delta2 = e_delta;
+    e_delta = deltad - dl;
+    de_delta = (e_delta - e_delta2) / dt; 
+    
+    s_delta = de_delta + lambda_delta*e_delta;
+    
+    if t>dt
+        t4 = (deltad - lambda_delta*de_delta + k_delta*sign(s_delta) - b(4,2)*U(2) + f(4)) / b(4,4);
+    end
+    
+    e_tethad = 1 - td;
+    
+    e_almte = ppid1(e_tethad,dt) - (al - theta);
+    
+    t2 = ppid2(e_almte,dt);
+    
+    e_delta = 0 - dl;
+    
+    %t4 = ppid3(e_delta,dt) + g*m_Slider*sin(phi);
+
+
     
     %render
     if mod(iteration, render_interval)  == 0
